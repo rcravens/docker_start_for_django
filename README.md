@@ -1,8 +1,20 @@
-# Laravel Docker Workflow
+# Django Docker Starter Kit
 
-This is a pretty simplified, but complete, workflow for using Docker and Docker Compose with Laravel development. The
-included docker-compose.yml file, Dockerfiles, and config files, set up a LEMP stack powering a Laravel application in
-the `code` directory.
+This is a pretty simplified, but complete, workflow for using Docker and Docker Compose with Django python development.
+The
+included docker-compose.yml file, Dockerfiles, and config files, set up a Django project in
+the `PATH_TO_CODE` directory.
+
+The following architecture is created:
+
+- Nginx - Used as the main application gateway. Nginx proxies python calls to the WSGI compliant gateway
+- Django - This container hosts the python code in a volume and runs a WSGI compliant gateway (`gunicorn` or built
+  in `runserver`)
+- Postgres - This container hosts the Postres data server. This server has the Post GIS extensions already installed
+- Redis - This container hosts the redis server that is used for session caching
+
+Using this starter kit, you can get developing in Django without installing the typical application stack (e.g., python,
+django, postgres...etc)
 
 ## Getting Started
 
@@ -12,9 +24,9 @@ Copy `.env_example` to `.env` and set the following variables:
 
 #### Application Settings
 
-- `COMPOSE_PROJECT_NAME=django_app` Used in the docker-compose.yml file to namespace the services (e.g.,
+- `COMPOSE_PROJECT_NAME=django` Used in the docker-compose.yml file to namespace the services (e.g.,
   APP_NAME=abc_app)
-- `APP_DOMAIN=django_app.local` - Used in the nginx service to automatically create a self-signed certificate for this
+- `APP_DOMAIN=django.local` - Used in the nginx service to automatically create a self-signed certificate for this
   domain.
 - `PATH_TO_CODE=../code` - Location of the code that is used to configure map volumes into the containers
 
@@ -53,31 +65,98 @@ The following are used by docker when building the database service:
 For local development, update your Operating System's host file. For example, add the following line to resolve a domain
 to localhost:
 
-- `127.0.0.1     django_app.local`
+- `127.0.0.1     django.local`
 
-## Usage
+## Basic Usage
 
 1. To get started, make sure you have [Docker installed](https://docs.docker.com/docker-for-mac/install/) on your
-   system,
-   and then copy this directory to a desired location on your development machine.
+   system, and then copy this repo to a desired location on your development machine.
 
-2. Open the .env file and update any settings (e.g., versions & exposed ports) to match your desired development
-   environment.
+2. For existing projects, place your Django code into the `PATH_TO_CODE` directory. For new project, this will be
+   created automatically.
 
-3. Navigate in your terminal to that directory, and spin up the containers for the full web server stack by running:
-   `docker-compose up -d --build nginx`.
+3. Using the terminal app, navigate to the directory you placed this repo. Run the following command to create docker
+   images and start containers:
 
-4. Update the `my_site/settings.py` file to contain the following lines:
+`docker-compose up -d --build nginx`.
 
-- `ALLOWED_HOSTS = ['django_app.local']` (adjust for actual `APP_DOMAIN` variable)
-- `CSRF_TRUSTED_ORIGINS = ['https://django_app.local:44301']` (adjust for actual `APP_DOMAIN`, `HTTPS_ON_HOST`
-  variables)
+3. **Update Hosts** - In the `my_site/settings.py` file update the following entries:
 
-5. Navigate to public page: [https_//django_app.local:44301](https_//django_app.local:44301)
+```
+# adjust for actual `APP_DOMAIN` variable
+ALLOWED_HOSTS = ['django.local']
 
-6. Run `./pyman.sh createsuperuser` and follow the prompts to create the admin super user
+# adjust for actual `APP_DOMAIN`, `HTTPS_ON_HOST` variables
+CSRF_TRUSTED_ORIGINS = ['https://django.local:44301']
 
-7. Navigate to admin page and login: [https_//django_app.local:44301/admin](https_//django_app.local:44301/admin)
+INTERNAL_IPS = ['127.0.0.1', 'localhost']
+```
+
+4. **Switch to Containerized Postgres** - To use the Postgres container, the following changes are required:
+
+- Create a `.env` file in your top level code directory (same level as `manage.py`) with the following lines:
+
+```
+POSTGRES_DB=django_db
+POSTGRES_USER=django
+POSTGRES_PASSWORD=secret
+```
+
+- Update the `my_site/settings.py` file to contain the following lines:
+
+```
+# add import statement near the top
+import os
+import environ
+
+# import the .env settings. place this after BASE_DIR is defined
+env = environ.Env()
+environ.Env.read_env(BASE_DIR / '.env')
+
+# database settings
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+        'NAME': env('POSTGRES_DB'),
+        'USER': env('POSTGRES_USER'),
+        'PASSWORD': env('POSTGRES_PASSWORD'),
+        'HOST': 'postgres',
+        'PORT': 5432,
+    }
+}
+```
+
+- Run the migrations on the new database:
+  `./pyman.sh migrate`
+
+- Create a super user by running the following:
+  `./pyman.sh createsuperuser`
+
+- After making the above changes, you can delete the SQLite file that was created.
+
+
+5. **Switch to Containerized Redis** - To use the Redis container, the following changes are required to
+   the `my_site/settings.py` file:
+
+```
+# redis cache / session
+CACHES = {
+  "default": {
+    "BACKEND": "django.core.cache.backends.redis.RedisCache",
+    "LOCATION": "redis://redis:6379/0",
+  }
+}
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache"
+
+SESSION_CACHE_ALIAS = "default"
+```
+
+- after this switch, your existing session will not be found, and you will need to log in again
+
+6. Navigate to public page: [https_//django.local:44301](https_//django.local:44301)
+
+7. Navigate to admin page and login: [https_//django.local:44301/admin](https_//django.local:44301/admin)
 
 ## Exposed Services
 

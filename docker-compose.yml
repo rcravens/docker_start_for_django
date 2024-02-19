@@ -51,6 +51,10 @@ services:
       args:
         - PYTHON_VERSION=${PYTHON_VERSION}
         - PATH_TO_CODE=${PATH_TO_CODE}
+        - POSTGRES_DB=${POSTGRES_DB}
+        - POSTGRES_USER=${POSTGRES_USER}
+        - POSTGRES_PASS=${POSTGRES_PASSWORD}
+
     container_name: ${COMPOSE_PROJECT_NAME}_python_${PYTHON_VERSION}
     volumes:
       - ${PATH_TO_CODE}:/app/code

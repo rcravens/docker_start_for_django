@@ -2,7 +2,6 @@ cd /app/code
 
 # ensure django project exists
 if ! [ -e manage.py ]; then
-  python -m pip install Django
   django-admin startproject my_site .
   pip freeze > requirements.txt
 fi
@@ -21,7 +20,7 @@ done;
 python manage.py migrate
 
 # collect static files
-python manage.py collectstatic
+python manage.py collectstatic --noinput
 
 # run the server
 python manage.py runserver 0.0.0.0:8080
