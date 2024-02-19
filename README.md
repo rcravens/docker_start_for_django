@@ -78,9 +78,9 @@ to localhost:
 3. Using the terminal app, navigate to the directory you placed this repo. Run the following command to create docker
    images and start containers:
 
-`docker-compose up -d --build nginx`.
+`docker compose up -d --build nginx`.
 
-3. **Update Hosts** - In the `my_site/settings.py` file update the following entries:
+4. **Update Hosts** - In the `my_site/settings.py` file update the following entries:
 
 ```
 # adjust for actual `APP_DOMAIN` variable
@@ -92,7 +92,7 @@ CSRF_TRUSTED_ORIGINS = ['https://django.local:44301']
 INTERNAL_IPS = ['127.0.0.1', 'localhost']
 ```
 
-4. **Switch to Containerized Postgres** - To use the Postgres container, the following changes are required:
+5. **Switch to Containerized Postgres** - To use the Postgres container, the following changes are required:
 
 - Create a `.env` file in your top level code directory (same level as `manage.py`) with the following lines:
 
@@ -135,7 +135,7 @@ DATABASES = {
 - After making the above changes, you can delete the SQLite file that was created.
 
 
-5. **Switch to Containerized Redis** - To use the Redis container, the following changes are required to
+6. **Switch to Containerized Redis** - To use the Redis container, the following changes are required to
    the `my_site/settings.py` file:
 
 ```
@@ -154,9 +154,9 @@ SESSION_CACHE_ALIAS = "default"
 
 - after this switch, your existing session will not be found, and you will need to log in again
 
-6. Navigate to public page: [https_//django.local:44301](https_//django.local:44301)
+7. Navigate to public page: [https://django.local:44301](https://django.local:44301)
 
-7. Navigate to admin page and login: [https_//django.local:44301/admin](https_//django.local:44301/admin)
+8. Navigate to admin page and login: [https://django.local:44301/admin](https://django.local:44301/admin)
 
 ## Exposed Services
 
@@ -164,7 +164,6 @@ When the container network is up, the following services and their ports are ava
 
 - **nginx** - `:HTTPS_ON_HOST`, `:HTTP_ON_HOST`
 - **postgres** - `:POSTGRES_ON_HOST`
-- **mysql** - `:MYSQL_ON_HOST`
 - **redis** - `:REDIS_ON_HOST`
 
 ## Other
@@ -185,5 +184,5 @@ Here are a few examples that you will be familiar with:
 
 You can create an interactive shell inside the container by doing one of the following:
 
-- If there is NOT a running container: `docker-compose run -it --entrypoint /bin/sh <SERVICE>`
+- If there is NOT a running container: `docker compose run -it --entrypoint /bin/sh <SERVICE>`
 - If there is already a running container: `docker compose exec -it <SERVICE> /bin/sh` 
