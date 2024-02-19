@@ -171,8 +171,17 @@ When the container network is up, the following services and their ports are ava
 
 There are a few shell script helpers included. These are:
 
-- `./pyman <COMMAND>` runs the `python manage.py <COMMAND>` inside the django container
-- `./pip <COMMAND>` runs `pip <COMMAND>` inside the django container
+- `./pyman.sh <COMMAND>` runs the `python manage.py <COMMAND>` inside the django container
+- `./pip.sh <COMMAND>` runs `pip <COMMAND>` inside the django container
+
+Here are a few examples that you will be familiar with:
+
+- `./pyman.sh startapp <APPNAME>`
+- `./pyman.sh makemigrations`
+- `./pyman.sh migrate`
+- `./pyman.sh collectstatic`
+- `./pip.sh install djangorestframework`
+- `./pip.sh freeze > requirements.txt`
 
 You can create an interactive shell inside the container by doing one of the following:
 
