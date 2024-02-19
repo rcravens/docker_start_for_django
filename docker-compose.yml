@@ -1,0 +1,108 @@
+version: '3.8'
+
+networks:
+  app_network:
+    name: ${COMPOSE_PROJECT_NAME}
+    driver: bridge
+
+services:
+
+  nginx:
+    build:
+      context: .
+      dockerfile: nginx.dockerfile
+      args:
+        - NGINX_VERSION=${NGINX_VERSION}
+        - APP_DOMAIN=${APP_DOMAIN}
+    container_name: ${COMPOSE_PROJECT_NAME}_nginx
+    depends_on:
+      - django
+    volumes:
+      - ${PATH_TO_CODE}:/app/code
+    ports:
+      - ${HTTP_ON_HOST}:80
+      - ${HTTPS_ON_HOST}:443
+    networks:
+      - app_network
+
+
+  postgres:
+    image: kartoza/postgis:$POSTGRES_MAJOR_VERSION-$POSTGIS_MAJOR_VERSION.${POSTGIS_MINOR_RELEASE}
+    volumes:
+      - ./postgre:/var/lib/postgresql
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASS=${POSTGRES_PASSWORD}
+      - ALLOW_IP_RANGE=0.0.0.0/0
+      - POSTGRES_MULTIPLE_EXTENSIONS=postgis,hstore,postgis_topology,postgis_raster,pgrouting
+    ports:
+      - ${POSTGRES_ON_HOST}:5432
+    restart: on-failure
+    healthcheck:
+      test: "PGPASSWORD=$${POSTGRES_PASS} pg_isready -h 127.0.0.1 -U docker -d gis"
+    networks:
+      - app_network
+
+  django:
+    build:
+      context: .
+      dockerfile: python.dockerfile
+      args:
+        - PYTHON_VERSION=${PYTHON_VERSION}
+        - PATH_TO_CODE=${PATH_TO_CODE}
+    container_name: ${COMPOSE_PROJECT_NAME}_python_${PYTHON_VERSION}
+    volumes:
+      - ${PATH_TO_CODE}:/app/code
+    working_dir: /app/code
+    expose:
+      - 8080
+    depends_on:
+      - postgres
+      - redis
+    entrypoint: [ "bash", "/app/entry_point.sh" ]
+    networks:
+      - app_network
+    env_file:
+      - .env
+
+  redis:
+    restart: unless-stopped
+    image: redis:${REDIS_VERSION}
+    container_name: ${COMPOSE_PROJECT_NAME}_redis
+    ports:
+      - ${REDIS_ON_HOST}:6379
+    networks:
+      - app_network
+
+
+
+
+  # services below this line are not currently integrated
+
+  mysql:
+    image: mysql:${MYSQL_VERSION}
+    container_name: ${COMPOSE_PROJECT_NAME}_mysql
+    ports:
+      - ${MYSQL_ON_HOST}:3306
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    networks:
+      - app_network
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+  npm:
+    image: node:${NODE_VERSION}
+    container_name: ${COMPOSE_PROJECT_NAME}_npm
+    volumes:
+      - ${PATH_TO_CODE}:/var/www/html
+    working_dir: /var/www/html
+    entrypoint: [ "npm" ]
+    networks:
+      - app_network
+
+
