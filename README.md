@@ -18,6 +18,9 @@ django, postgres...etc)
 
 ## Getting Started
 
+[![IMAGE ALT TEXT HERE](https://img.youtube.com/vi/v76yJuf2xIU/0.jpg)](https://www.youtube.com/watch?v=v76yJuf2xIU)
+
+
 ### Configuration Settings
 
 Copy `.env_example` to `.env` and set the following variables:
